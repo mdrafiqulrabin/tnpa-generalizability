@@ -8,10 +8,11 @@ import java.util.concurrent.Callable;
 
 public class ASTExplorer implements Callable<Void> {
 
-    String mCodePath = null;
-    String mCodeText = null;
+    private String mCodePath = null;
+    private String mCodeText = null;
+    private CompilationUnit mCompilationUnit = null;
 
-    public ASTExplorer(String path) {
+    ASTExplorer(String path) {
         this.mCodePath = path;
     }
 
@@ -23,20 +24,30 @@ public class ASTExplorer implements Callable<Void> {
      */
     @Override
     public Void call() throws Exception {
-        Common.printLog("ASTExplorer -> call():");
         readSourceCode();
         inspectSourceCode();
+        showSourceCode();
         return null;
     }
 
     private void inspectSourceCode() {
         Common.printLog("ASTExplorer -> inspectSourceCode():");
         try {
-            CompilationUnit compUnit = JavaParser.parse(mCodeText);
-            System.out.println(compUnit);
+            mCompilationUnit = JavaParser.parse(mCodeText);
+            callMethodVisitor(mCompilationUnit);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    private void showSourceCode() {
+        Common.printLog("ASTExplorer -> showSourceCode():");
+        System.out.println(mCompilationUnit.toString());
+    }
+
+    private void callMethodVisitor(CompilationUnit compUnit) {
+        ASTVisitor astVisitor = new ASTVisitor();
+        astVisitor.visit(compUnit, null);
     }
 
     private void readSourceCode() {

@@ -1,5 +1,8 @@
 class Test {
     void empty() {
-        System.out.println("Nothing!");
+        int x = 0;
+        x = 1;
+        int y = 0;
+        y = 2;
     }
 }
