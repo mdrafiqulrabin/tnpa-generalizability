@@ -36,7 +36,7 @@ public class VariableRenaming extends VoidVisitorAdapter<Object> {
                         @Override
                         public void process(Node node) {
                             String oldName = v_node.getUserData(Common.VariableName);
-                            if (node.toString().equalsIgnoreCase(oldName)) {
+                            if (node.toString().equals(oldName)) {
                                 String newName = "var" + v_node.getUserData(Common.VariableId);
                                 if (node instanceof VariableDeclaratorId) {
                                     ((VariableDeclaratorId) node).setName(newName);
