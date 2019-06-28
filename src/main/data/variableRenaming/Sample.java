@@ -1,4 +1,5 @@
 class C {
+
     void f(int[] var0) {
         boolean var1 = true;
         for (int var2 = 0; var2 < var0.length && var1; var2++) {
@@ -14,3 +15,4 @@ class C {
         }
     }
 }
+

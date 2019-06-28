@@ -1,60 +1,50 @@
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
 public class ASTExplorer implements Callable<Void> {
 
-    private String mCodePath = null;
-    private String mCodeText = null;
+    private String mSourceCode = null;
     private CompilationUnit mCompilationUnit = null;
 
-    ASTExplorer(String path) {
-        this.mCodePath = path;
-    }
-
-    /**
-     * Computes a result, or throws an exception if unable to do so.
-     *
-     * @return computed result
-     * @throws Exception if unable to compute a result
-     */
     @Override
-    public Void call() throws Exception {
+    public Void call() {
         readSourceCode();
         inspectSourceCode();
-        showSourceCode();
+        writeSourceCode();
         return null;
+    }
+
+    private void writeSourceCode() {
+        Common.printLog("ASTExplorer -> writeSourceCode():");
+        String tfSourceCode = mCompilationUnit.toString();
+        try (PrintStream ps = new PrintStream(Common.SRC_PATH_VARIABLE_RENAMING)) {
+            ps.println(tfSourceCode);
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+        }
+        System.out.println(tfSourceCode);
     }
 
     private void inspectSourceCode() {
         Common.printLog("ASTExplorer -> inspectSourceCode():");
-        try {
-            mCompilationUnit = JavaParser.parse(mCodeText);
-            callMethodVisitor(mCompilationUnit);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-    }
-
-    private void showSourceCode() {
-        Common.printLog("ASTExplorer -> showSourceCode():");
-        System.out.println(mCompilationUnit.toString());
-    }
-
-    private void callMethodVisitor(CompilationUnit compUnit) {
-        ASTVisitor astVisitor = new ASTVisitor();
-        astVisitor.visit(compUnit, null);
+        mCompilationUnit = JavaParser.parse(mSourceCode);
+        new VariableRenaming().visit(mCompilationUnit, null);
     }
 
     private void readSourceCode() {
         Common.printLog("ASTExplorer -> readSourceCode():");
         try {
-            mCodeText = new String(Files.readAllBytes(Paths.get(this.mCodePath)));
-            System.out.println(mCodeText);
+            Path codePath = Paths.get(Common.SRC_PATH_ORIGINAL);
+            mSourceCode = new String(Files.readAllBytes(codePath));
+            System.out.println(mSourceCode);
         } catch (IOException ex) {
             ex.printStackTrace();
         }
