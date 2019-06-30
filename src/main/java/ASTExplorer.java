@@ -18,25 +18,7 @@ public class ASTExplorer implements Callable<Void> {
     public Void call() {
         readSourceCode();
         inspectSourceCode();
-        writeSourceCode();
         return null;
-    }
-
-    private void writeSourceCode() {
-        Common.printLog("ASTExplorer -> writeSourceCode():");
-        String tfSourceCode = mCompilationUnit.toString();
-        try (PrintStream ps = new PrintStream(Common.SRC_PATH_VARIABLE_RENAMING)) {
-            ps.println(tfSourceCode);
-        } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-        }
-        System.out.println(tfSourceCode);
-    }
-
-    private void inspectSourceCode() {
-        Common.printLog("ASTExplorer -> inspectSourceCode():");
-        mCompilationUnit = JavaParser.parse(mSourceCode);
-        new VariableRenaming().visit(mCompilationUnit, null);
     }
 
     private void readSourceCode() {
@@ -48,5 +30,34 @@ public class ASTExplorer implements Callable<Void> {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+    }
+
+    private void inspectSourceCode() {
+        //Common.printLog("ASTExplorer -> inspectSourceCode():");
+        variableRenaming();
+        booleanExchange();
+    }
+
+    private void variableRenaming() {
+        mCompilationUnit = JavaParser.parse(mSourceCode);
+        new VariableRenaming().visit(mCompilationUnit, null);
+        writeSourceCode(Common.SRC_PATH_VARIABLE_RENAMING);
+    }
+
+    private void booleanExchange() {
+        mCompilationUnit = JavaParser.parse(mSourceCode);
+        new BooleanExchange().visit(mCompilationUnit, null);
+        writeSourceCode(Common.SRC_PATH_BOOLEAN_EXCHANGE);
+    }
+
+    private void writeSourceCode(String filename) {
+        Common.printLog("ASTExplorer -> writeSourceCode():");
+        String tfSourceCode = mCompilationUnit.toString();
+        try (PrintStream ps = new PrintStream(filename)) {
+            ps.println(tfSourceCode);
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+        }
+        System.out.println(tfSourceCode);
     }
 }

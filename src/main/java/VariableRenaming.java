@@ -1,6 +1,5 @@
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
-import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.VariableDeclaratorId;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.visitor.TreeVisitor;
@@ -12,9 +11,18 @@ public class VariableRenaming extends VoidVisitorAdapter<Object> {
     private int mVariableCounter = 0;
     private ArrayList<Node> mVariableList = new ArrayList<>();
 
+    VariableRenaming() {
+        Common.printLog("ASTExplorer -> inspectSourceCode() -> VariableRenaming():");
+    }
+
     @Override
     public void visit(CompilationUnit com, Object obj) {
+        locateVariableRenaming(com, obj);
+        applyVariableRenaming(com, obj);
+        super.visit(com, obj);
+    }
 
+    private void locateVariableRenaming(CompilationUnit com, Object obj) {
         new TreeVisitor() {
             @Override
             public void process(Node node) {
@@ -26,31 +34,24 @@ public class VariableRenaming extends VoidVisitorAdapter<Object> {
                 }
             }
         }.visitDepthFirst(com);
+    }
 
-        mVariableList.forEach((v_node) -> {
-            new VoidVisitorAdapter<Object>() {
+    private void applyVariableRenaming(CompilationUnit com, Object obj) {
+        mVariableList.forEach((var_node) -> {
+            new TreeVisitor() {
                 @Override
-                public void visit(MethodDeclaration m_node, Object obj) {
-                    Node v_node = (Node) obj;
-                    new TreeVisitor() {
-                        @Override
-                        public void process(Node node) {
-                            String oldName = v_node.getUserData(Common.VariableName);
-                            if (node.toString().equals(oldName)) {
-                                String newName = "var" + v_node.getUserData(Common.VariableId);
-                                if (node instanceof VariableDeclaratorId) {
-                                    ((VariableDeclaratorId) node).setName(newName);
-                                } else if (node instanceof NameExpr) {
-                                    ((NameExpr) node).setName(newName);
-                                }
-                            }
+                public void process(Node node) {
+                    String oldName = var_node.getUserData(Common.VariableName);
+                    if (node.toString().equals(oldName)) {
+                        String newName = "var" + var_node.getUserData(Common.VariableId);
+                        if (node instanceof VariableDeclaratorId) {
+                            ((VariableDeclaratorId) node).setName(newName);
+                        } else if (node instanceof NameExpr) {
+                            ((NameExpr) node).setName(newName);
                         }
-                    }.visitDepthFirst(m_node);
-                    super.visit(m_node, obj);
+                    }
                 }
-            }.visit(com, v_node);
+            }.visitDepthFirst(com);
         });
-
-        super.visit(com, obj);
     }
 }

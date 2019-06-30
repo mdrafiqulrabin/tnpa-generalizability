@@ -3,6 +3,7 @@ import com.github.javaparser.ast.UserDataKey;
 public final class Common {
     public static final String SRC_PATH_ORIGINAL = "src/main/data/original/Sample.java";
     public static final String SRC_PATH_VARIABLE_RENAMING = "src/main/data/variableRenaming/Sample.java";
+    public static final String SRC_PATH_BOOLEAN_EXCHANGE = "src/main/data/booleanExchange/Sample.java";
 
     public static final UserDataKey<Integer> VariableId = new UserDataKey<Integer>() {
     };
