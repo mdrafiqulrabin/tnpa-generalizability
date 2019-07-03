@@ -1,6 +1,6 @@
 class C {
 
-    void f(int[] array) {
+    void sort(int[] array) {
         boolean swapped = false;
         for (int i = 0; i < array.length && !swapped; i++) {
             swapped = true;
