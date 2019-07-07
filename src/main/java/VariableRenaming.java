@@ -1,5 +1,6 @@
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.VariableDeclaratorId;
 import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.visitor.TreeVisitor;
@@ -46,7 +47,7 @@ public class VariableRenaming extends VoidVisitorAdapter<Object> {
                         String newName = "var" + var_node.getUserData(Common.VariableId);
                         if (node instanceof VariableDeclaratorId) {
                             ((VariableDeclaratorId) node).setName(newName);
-                        } else if (node instanceof NameExpr) {
+                        } else if (node instanceof NameExpr && !(node.getParentNode() instanceof MethodDeclaration)) {
                             ((NameExpr) node).setName(newName);
                         }
                     }

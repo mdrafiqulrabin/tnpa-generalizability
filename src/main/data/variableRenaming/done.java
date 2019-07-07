@@ -1,6 +1,6 @@
 class C {
 
-    void var0() {
+    void done() {
         boolean var0 = false;
         while (!var0) {
             if (remaining() <= 0) {
