@@ -28,7 +28,6 @@ public class BooleanExchange extends VoidVisitorAdapter<Object> {
         new TreeVisitor() {
             @Override
             public void process(Node node) {
-                System.out.println(node.toString() + " - " + node.getClass() + " >> " + node.getParentNode().orElse(node).getClass());
                 Node booleanNode = hasBooleanVariable(node, com);
                 if (booleanNode != null)
                     mBooleanList.add(booleanNode);
@@ -39,7 +38,6 @@ public class BooleanExchange extends VoidVisitorAdapter<Object> {
     }
 
     private void applyBooleanExchange(CompilationUnit com, Object obj) {
-        //if (true) return;
         mBooleanList.forEach((bolNode) -> {
             new TreeVisitor() {
                 @Override
@@ -53,7 +51,9 @@ public class BooleanExchange extends VoidVisitorAdapter<Object> {
                     } else if (node instanceof NameExpr && node.toString().equals(bolNode.toString())) {
                         if (node.getParentNode().orElse(null) instanceof UnaryExpr) {
                             // i.e. !x -> !!x
-                            ((NameExpr) node).setName("!" + node.toString());
+                            //((NameExpr) node).setName("!" + node.toString());
+                            // i.e. !x -> x
+                            node.getParentNode().orElse(null).replace(node);
                         } else if (node.getParentNode().orElse(null) instanceof BinaryExpr
                                 && !(((BinaryExpr) node.getParentNode().orElse(null)).getOperator().equals(BinaryExpr.Operator.EQUALS)
                                 || (((BinaryExpr) node.getParentNode().orElse(null)).getOperator().equals(BinaryExpr.Operator.NOT_EQUALS)))) {
