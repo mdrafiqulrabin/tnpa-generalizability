@@ -1,5 +1,5 @@
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.UserDataKey;
+import com.github.javaparser.ast.DataKey;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -11,9 +11,9 @@ public final class Common {
     public static final String SRC_PATH_VARIABLE_RENAMING = "src/main/data/variableRenaming/";
     public static final String SRC_PATH_BOOLEAN_EXCHANGE = "src/main/data/booleanExchange/";
 
-    public static final UserDataKey<Integer> VariableId = new UserDataKey<Integer>() {
+    public static final DataKey<Integer> VariableId = new DataKey<Integer>() {
     };
-    public static final UserDataKey<String> VariableName = new UserDataKey<String>() {
+    public static final DataKey<String> VariableName = new DataKey<String>() {
     };
 
     public static void printLog(Object obj) {
@@ -32,6 +32,7 @@ public final class Common {
         for (File file : listOfFiles) {
             Path codePath = Paths.get(file.getPath());
             listOfPaths.add(codePath);
+            //if (file.getName().contains("sample.java")) break;
         }
         return listOfPaths;
     }
