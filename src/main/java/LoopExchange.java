@@ -44,25 +44,42 @@ public class LoopExchange extends VoidVisitorAdapter<Object> {
                 nodeForStmt.setBody(((WhileStmt) loopNode).getBody());
                 loopNode.replace(nodeForStmt);
             } else if (loopNode instanceof ForStmt) {
-                BlockStmt outerBlockStmt = new BlockStmt();
-
-                for (Expression exp : ((ForStmt) loopNode).getInitialization()) {
-                    outerBlockStmt.addStatement(exp);
+                if (((ForStmt) loopNode).getInitialization().size() != 0) {
+                    BlockStmt outerBlockStmt = new BlockStmt();
+                    for (Expression exp : ((ForStmt) loopNode).getInitialization()) {
+                        outerBlockStmt.addStatement(exp);
+                    }
+                    WhileStmt nodeWhileStmt = getWhileStmt(loopNode);
+                    outerBlockStmt.addStatement(nodeWhileStmt);
+                    loopNode.replace(outerBlockStmt);
+                } else {
+                    loopNode.replace(getWhileStmt(loopNode));
                 }
-
-                WhileStmt nodeWhileStmt = new WhileStmt();
-                nodeWhileStmt.setCondition(((ForStmt) loopNode).getCompare().orElse(new BooleanLiteralExpr(true)));
-                BlockStmt innerBlockStmt = new BlockStmt();
-                for (Expression exp : ((ForStmt) loopNode).getUpdate()) {
-                    innerBlockStmt.addStatement(exp);
-                }
-                innerBlockStmt.addStatement(0, ((ForStmt) loopNode).getBody());
-                nodeWhileStmt.setBody(innerBlockStmt);
-
-                outerBlockStmt.addStatement(nodeWhileStmt);
-                loopNode.replace(outerBlockStmt);
             }
         });
+    }
+
+    private WhileStmt getWhileStmt(Node loopNode) {
+        WhileStmt nodeWhileStmt = new WhileStmt();
+        nodeWhileStmt.setCondition(((ForStmt) loopNode).getCompare().orElse(new BooleanLiteralExpr(true)));
+        if (((ForStmt) loopNode).getBody().getChildNodes().size() == 0 && ((ForStmt) loopNode).getUpdate().size() == 0) {
+            //i.e. for(?;?;); or for(?;?;){}
+            nodeWhileStmt.setBody(((ForStmt) loopNode).getBody());
+        } else {
+            BlockStmt innerBlockStmt;
+            if (((ForStmt) loopNode).getBody().getChildNodes().size() != 0) {
+                //i.e. for(?;?;?){...}
+                innerBlockStmt = (BlockStmt) ((ForStmt) loopNode).getBody();
+            } else {
+                //i.e. for(?;?;...); or for(?;?;...){}
+                innerBlockStmt = new BlockStmt();
+            }
+            for (Expression exp : ((ForStmt) loopNode).getUpdate()) {
+                innerBlockStmt.addStatement(exp);
+            }
+            nodeWhileStmt.setBody(innerBlockStmt);
+        }
+        return nodeWhileStmt;
     }
 
 }
