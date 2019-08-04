@@ -1,3 +1,4 @@
+import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -10,12 +11,16 @@ import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
 import java.util.ArrayList;
 
-public class VariableRenaming extends VoidVisitorAdapter<Object> {
+public class RenameVariable extends VoidVisitorAdapter<Object> {
     private int mVariableCounter = 0;
     private ArrayList<Node> mVariableList = new ArrayList<>();
 
-    VariableRenaming(String codePath) {
-        Common.printLog("VariableRenaming(): " + codePath);
+    public RenameVariable() {
+        System.out.println("\n[ RenameVariable ]\n");
+    }
+
+    public void inspectSourceCode() {
+        Common.inspectSourceCode(this);
     }
 
     @Override
@@ -36,7 +41,7 @@ public class VariableRenaming extends VoidVisitorAdapter<Object> {
                 }
             }
         }.visitPreOrder(com);
-        System.out.println("TargetVariable : " + mVariableList);
+        //System.out.println("TargetVariable : " + mVariableList);
     }
 
     private boolean isTargetVariable(Node node, CompilationUnit com) {

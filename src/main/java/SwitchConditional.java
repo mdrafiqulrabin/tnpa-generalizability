@@ -11,8 +11,12 @@ import java.util.ArrayList;
 public class SwitchConditional extends VoidVisitorAdapter<Object> {
     private ArrayList<Node> mSwitchNodes = new ArrayList<>();
 
-    SwitchConditional(String codePath) {
-        Common.printLog("SwitchConditional(): " + codePath);
+    SwitchConditional() {
+        System.out.println("\n[ SwitchConditional ]\n");
+    }
+
+    public void inspectSourceCode() {
+        Common.inspectSourceCode(this);
     }
 
     @Override
@@ -31,7 +35,7 @@ public class SwitchConditional extends VoidVisitorAdapter<Object> {
                 }
             }
         }.visitPreOrder(com);
-        System.out.println("SwitchNodes : " + mSwitchNodes.size());
+        //System.out.println("SwitchNodes : " + mSwitchNodes.size());
     }
 
     private void applySwitchTransform() {

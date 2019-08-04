@@ -13,8 +13,12 @@ import java.util.ArrayList;
 public class BooleanExchange extends VoidVisitorAdapter<Object> {
     private ArrayList<Node> mBooleanList = new ArrayList<>();
 
-    BooleanExchange(String codePath) {
-        Common.printLog("BooleanExchange(): " + codePath);
+    BooleanExchange() {
+        System.out.println("\n[ BooleanExchange ]\n");
+    }
+
+    public void inspectSourceCode() {
+        Common.inspectSourceCode(this);
     }
 
     @Override
@@ -34,7 +38,7 @@ public class BooleanExchange extends VoidVisitorAdapter<Object> {
 
             }
         }.visitPreOrder(com);
-        System.out.println("BooleanVariable : " + mBooleanList);
+        //System.out.println("BooleanVariable : " + mBooleanList);
     }
 
     private void applyBooleanExchange(CompilationUnit com, Object obj) {

@@ -13,8 +13,12 @@ import java.util.ArrayList;
 public class LoopExchange extends VoidVisitorAdapter<Object> {
     private ArrayList<Node> mLoopNodes = new ArrayList<>();
 
-    LoopExchange(String codePath) {
-        Common.printLog("LoopExchange(): " + codePath);
+    LoopExchange() {
+        System.out.println("\n[ LoopExchange ]\n");
+    }
+
+    public void inspectSourceCode() {
+        Common.inspectSourceCode(this);
     }
 
     @Override
@@ -33,7 +37,7 @@ public class LoopExchange extends VoidVisitorAdapter<Object> {
                 }
             }
         }.visitPreOrder(com);
-        System.out.println("LoopNodes : " + mLoopNodes.size());
+        //System.out.println("LoopNodes : " + mLoopNodes.size());
     }
 
     private void applyLoopExchange() {
