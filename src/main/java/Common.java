@@ -45,6 +45,8 @@ public final class Common {
                     ((LoopExchange)obj).visit(root, null);
                 } else if (obj instanceof SwitchConditional) {
                     ((SwitchConditional)obj).visit(root, null);
+                } else if (obj instanceof PermuteStatement) {
+                    ((PermuteStatement)obj).visit(root, null);
                 }
 
                 System.out.println("Transformed = \n" + root + "\n");
