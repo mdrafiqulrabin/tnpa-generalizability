@@ -4,10 +4,10 @@ public class ASTExplorer implements Callable<Void> {
 
     @Override
     public Void call() {
-        /*new RenameVariable().inspectSourceCode();
+        new RenameVariable().inspectSourceCode();
         new BooleanExchange().inspectSourceCode();
         new SwitchConditional().inspectSourceCode();
-        new LoopExchange().inspectSourceCode();*/
+        new LoopExchange().inspectSourceCode();
         new PermuteStatement().inspectSourceCode();
         return null;
     }

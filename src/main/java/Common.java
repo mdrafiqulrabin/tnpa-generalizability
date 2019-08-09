@@ -1,6 +1,7 @@
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.DataKey;
+import com.github.javaparser.ast.body.MethodDeclaration;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -9,7 +10,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 
 public final class Common {
+
+    public final class Threshold {
+        public static final int STATEMENTS_PER_METHOD = 5;
+    }
+
     public static final String SRC_PATH_ORIGINAL = "src/main/data/original/";
+    public static final String SRC_PATH_DATA = "src/main/data/";
 
     public static final DataKey<Integer> VariableId = new DataKey<Integer>() {};
     public static final DataKey<String> VariableName = new DataKey<String>() {};
@@ -56,14 +63,14 @@ public final class Common {
         });
     }
 
-    public static void writeSourceCode(CompilationUnit comUnit, String codePath) {
-        String tfSourceCode = comUnit.toString();
+    public static void writeSourceCode(MethodDeclaration md, String codePath) {
+        String tfSourceCode = md.toString();
+        new File(codePath).getParentFile().mkdirs();
         try (PrintStream ps = new PrintStream(codePath)) {
             ps.println(tfSourceCode);
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }
-        System.out.println(tfSourceCode);
     }
 
 }
