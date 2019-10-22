@@ -36,11 +36,11 @@ public class ASTExplorer implements Callable<Void> {
 
         javaFiles.forEach((javaFile) -> {
             try {
-                //new RenameVariable().inspectSourceCode(javaFile);
-                //new BooleanExchange().inspectSourceCode(javaFile);
-                //new SwitchConditional().inspectSourceCode(javaFile);
+                new RenameVariable().inspectSourceCode(javaFile);
+                new BooleanExchange().inspectSourceCode(javaFile);
+                new SwitchConditional().inspectSourceCode(javaFile);
                 new LoopExchange().inspectSourceCode(javaFile);
-                //new PermuteStatement().inspectSourceCode(javaFile);
+                new PermuteStatement().inspectSourceCode(javaFile);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }

@@ -73,7 +73,7 @@ public final class Common {
             Common.writeSourceCode(mdAfter, output_dir);
         } catch (Exception ex) {
             System.out.println("\n" + "Exception: " + javaFile.getPath());
-            String error_dir = mOutputPath + "java_parser_error.txt";
+            String error_dir = Common.mOutputPath + obj.getClass().getSimpleName() + "/java_parser_error.txt";
             saveErrText(error_dir, javaFile);
             ex.printStackTrace();
         }

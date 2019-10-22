@@ -43,23 +43,29 @@ public class SwitchConditional extends VoidVisitorAdapter<Object> {
     private void applySwitchTransform() {
         mSwitchNodes.forEach((switchNode) -> {
             ArrayList<Object> ifStmts = new ArrayList<>();
-            for (SwitchEntry switchEntry : ((SwitchStmt) switchNode).getEntries()) {
-
-                if (switchEntry.getLabels().size() != 0) {
-                    // cases
-                    ifStmts.add(getIfStmt(switchNode, switchEntry));
-                } else {
-                    if (((SwitchStmt) switchNode).getEntries().size() == 1) {
-                        // default without cases
+            if (((SwitchStmt) switchNode).getEntries().size() == 0) {
+                // empty
+                ifStmts.add(getIfStmt(switchNode, null));
+            } else {
+                BlockStmt defaultBlockStmt = null;
+                for (SwitchEntry switchEntry : ((SwitchStmt) switchNode).getEntries()) {
+                    if (switchEntry.getLabels().size() != 0) {
+                        // cases
                         ifStmts.add(getIfStmt(switchNode, switchEntry));
                     } else {
-                        // default with cases
-                        ifStmts.add(getBlockStmt(switchEntry));
+                        if (((SwitchStmt) switchNode).getEntries().size() == 1) {
+                            // default without cases
+                            ifStmts.add(getIfStmt(switchNode, switchEntry));
+                        } else {
+                            // default with cases
+                            defaultBlockStmt = getBlockStmt(switchEntry);
+                        }
                     }
                 }
-            }
-            for (int i = 0; i < ifStmts.size() - 1; i++) {
-                ((IfStmt) ifStmts.get(i)).setElseStmt((Statement) ifStmts.get(i + 1));
+                if (defaultBlockStmt != null) ifStmts.add(defaultBlockStmt); // default at end with cases
+                for (int i = 0; i < ifStmts.size() - 1; i++) {
+                    ((IfStmt) ifStmts.get(i)).setElseStmt((Statement) ifStmts.get(i + 1));
+                }
             }
             switchNode.replace((IfStmt) ifStmts.get(0));
         });
@@ -69,7 +75,7 @@ public class SwitchConditional extends VoidVisitorAdapter<Object> {
         BinaryExpr binaryExpr = new BinaryExpr();
         binaryExpr.setLeft(((SwitchStmt) switchNode).getSelector());
         binaryExpr.setOperator(BinaryExpr.Operator.EQUALS);
-        if (switchEntry.getLabels().size() != 0) {
+        if (switchEntry != null && switchEntry.getLabels().size() != 0) {
             binaryExpr.setRight(switchEntry.getLabels().get(0)); // case(?)
         } else {
             binaryExpr.setRight(((SwitchStmt) switchNode).getSelector()); // only default
@@ -79,9 +85,11 @@ public class SwitchConditional extends VoidVisitorAdapter<Object> {
 
     private BlockStmt getBlockStmt(SwitchEntry switchEntry) {
         BlockStmt blockStmt = new BlockStmt();
-        switchEntry.getStatements().forEach((stmt) -> {
-            if (!(stmt instanceof BreakStmt)) blockStmt.addStatement(stmt);
-        });
+        if (switchEntry != null) {
+            switchEntry.getStatements().forEach((stmt) -> {
+                if (!(stmt instanceof BreakStmt)) blockStmt.addStatement(stmt);
+            });
+        }
         return blockStmt;
     }
 
