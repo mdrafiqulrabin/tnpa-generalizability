@@ -1,4 +1,3 @@
-import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -9,18 +8,20 @@ import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.visitor.TreeVisitor;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
+import java.io.File;
 import java.util.ArrayList;
 
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class RenameVariable extends VoidVisitorAdapter<Object> {
     private int mVariableCounter = 0;
     private ArrayList<Node> mVariableList = new ArrayList<>();
 
-    public RenameVariable() {
-        System.out.println("\n[ RenameVariable ]\n");
+    RenameVariable() {
+        //System.out.println("\n[ RenameVariable ]\n");
     }
 
-    public void inspectSourceCode() {
-        Common.inspectSourceCode(this);
+    public void inspectSourceCode(File javaFile) {
+        Common.inspectSourceCode(this, javaFile);
     }
 
     @Override
@@ -51,21 +52,19 @@ public class RenameVariable extends VoidVisitorAdapter<Object> {
     }
 
     private void applyVariableRenaming(CompilationUnit com, Object obj) {
-        mVariableList.forEach((var_node) -> {
-            new TreeVisitor() {
-                @Override
-                public void process(Node node) {
-                    String oldName = var_node.getData(Common.VariableName);
-                    if (node.toString().equals(oldName)) {
-                        String newName = "var" + var_node.getData(Common.VariableId);
-                        if (node instanceof SimpleName
-                                && !(node.getParentNode().orElse(null) instanceof MethodDeclaration)
-                                && !(node.getParentNode().orElse(null) instanceof ClassOrInterfaceDeclaration)) {
-                            ((SimpleName) node).setIdentifier(newName);
-                        }
+        mVariableList.forEach((var_node) -> new TreeVisitor() {
+            @Override
+            public void process(Node node) {
+                String oldName = var_node.getData(Common.VariableName);
+                if (node.toString().equals(oldName)) {
+                    String newName = "var" + var_node.getData(Common.VariableId);
+                    if (node instanceof SimpleName
+                            && !(node.getParentNode().orElse(null) instanceof MethodDeclaration)
+                            && !(node.getParentNode().orElse(null) instanceof ClassOrInterfaceDeclaration)) {
+                        ((SimpleName) node).setIdentifier(newName);
                     }
                 }
-            }.visitPreOrder(com);
-        });
+            }
+        }.visitPreOrder(com));
     }
 }

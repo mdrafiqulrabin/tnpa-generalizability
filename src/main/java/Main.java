@@ -1,6 +1,7 @@
 public class Main {
     public static void main(String[] args) {
-        //new MethodExtractor().call();
-        new ASTExplorer().call();
+        String inpPath = args[0];
+        String outPath = args[1];
+        new ASTExplorer(inpPath,outPath).call();
     }
 }

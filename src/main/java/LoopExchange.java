@@ -4,21 +4,24 @@ import com.github.javaparser.ast.expr.BooleanLiteralExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.stmt.BlockStmt;
 import com.github.javaparser.ast.stmt.ForStmt;
+import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.stmt.WhileStmt;
 import com.github.javaparser.ast.visitor.TreeVisitor;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
+import java.io.File;
 import java.util.ArrayList;
 
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class LoopExchange extends VoidVisitorAdapter<Object> {
     private ArrayList<Node> mLoopNodes = new ArrayList<>();
 
     LoopExchange() {
-        System.out.println("\n[ LoopExchange ]\n");
+        //System.out.println("\n[ LoopExchange ]\n");
     }
 
-    public void inspectSourceCode() {
-        Common.inspectSourceCode(this);
+    public void inspectSourceCode(File javaFile) {
+        Common.inspectSourceCode(this,javaFile);
     }
 
     @Override
@@ -73,7 +76,13 @@ public class LoopExchange extends VoidVisitorAdapter<Object> {
             BlockStmt innerBlockStmt;
             if (((ForStmt) loopNode).getBody().getChildNodes().size() != 0) {
                 //i.e. for(?;?;?){...}
-                innerBlockStmt = (BlockStmt) ((ForStmt) loopNode).getBody();
+                Statement forStmtBody = ((ForStmt) loopNode).getBody();
+                if (forStmtBody instanceof BlockStmt) {
+                    innerBlockStmt = (BlockStmt) forStmtBody;
+                } else {
+                    innerBlockStmt = new BlockStmt();
+                    innerBlockStmt.addStatement(forStmtBody);
+                }
             } else {
                 //i.e. for(?;?;...); or for(?;?;...){}
                 innerBlockStmt = new BlockStmt();

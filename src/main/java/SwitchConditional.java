@@ -6,17 +6,19 @@ import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.TreeVisitor;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
+import java.io.File;
 import java.util.ArrayList;
 
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class SwitchConditional extends VoidVisitorAdapter<Object> {
     private ArrayList<Node> mSwitchNodes = new ArrayList<>();
 
     SwitchConditional() {
-        System.out.println("\n[ SwitchConditional ]\n");
+        //System.out.println("\n[ SwitchConditional ]\n");
     }
 
-    public void inspectSourceCode() {
-        Common.inspectSourceCode(this);
+    public void inspectSourceCode(File javaFile) {
+        Common.inspectSourceCode(this, javaFile);
     }
 
     @Override

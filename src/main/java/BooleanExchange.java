@@ -8,17 +8,20 @@ import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.ast.visitor.TreeVisitor;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Objects;
 
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class BooleanExchange extends VoidVisitorAdapter<Object> {
     private ArrayList<Node> mBooleanList = new ArrayList<>();
 
     BooleanExchange() {
-        System.out.println("\n[ BooleanExchange ]\n");
+        //System.out.println("\n[ BooleanExchange ]\n");
     }
 
-    public void inspectSourceCode() {
-        Common.inspectSourceCode(this);
+    public void inspectSourceCode(File javaFile) {
+        Common.inspectSourceCode(this, javaFile);
     }
 
     @Override
@@ -42,35 +45,33 @@ public class BooleanExchange extends VoidVisitorAdapter<Object> {
     }
 
     private void applyBooleanExchange(CompilationUnit com, Object obj) {
-        mBooleanList.forEach((bolNode) -> {
-            new TreeVisitor() {
-                @Override
-                public void process(Node node) {
-                    if (node instanceof BooleanLiteralExpr) {
-                        // i.e. true/false -> false/true
-                        Node curNode = node.getParentNode().orElse(null).findFirst(SimpleName.class).orElse(null);
-                        if (curNode != null && curNode.toString().equals(bolNode.toString())) {
-                            ((BooleanLiteralExpr) node).setValue(!((BooleanLiteralExpr) node).getValue());
-                        }
-                    } else if (node instanceof NameExpr && node.toString().equals(bolNode.toString())) {
-                        if (node.getParentNode().orElse(null) instanceof UnaryExpr) {
-                            // i.e. !x -> !!x
-                            //((NameExpr) node).setName("!" + node.toString());
-                            // i.e. !x -> x
-                            node.getParentNode().orElse(null).replace(node);
-                        } else if (node.getParentNode().orElse(null) instanceof BinaryExpr
-                                && !(((BinaryExpr) node.getParentNode().orElse(null)).getOperator().equals(BinaryExpr.Operator.EQUALS)
-                                || (((BinaryExpr) node.getParentNode().orElse(null)).getOperator().equals(BinaryExpr.Operator.NOT_EQUALS)))) {
-                            // i.e. x && y -> !x && !y
-                            ((NameExpr) node).setName("!" + node.toString());
-                        } else if (node.getParentNode().orElse(null) instanceof Statement) {
-                            // i.e. x -> !x
-                            ((NameExpr) node).setName("!" + node.toString());
-                        }
+        mBooleanList.forEach((bolNode) -> new TreeVisitor() {
+            @Override
+            public void process(Node node) {
+                if (node instanceof BooleanLiteralExpr) {
+                    // i.e. true/false -> false/true
+                    Node curNode = Objects.requireNonNull(node.getParentNode().orElse(null)).findFirst(SimpleName.class).orElse(null);
+                    if (curNode != null && curNode.toString().equals(bolNode.toString())) {
+                        ((BooleanLiteralExpr) node).setValue(!((BooleanLiteralExpr) node).getValue());
+                    }
+                } else if (node instanceof NameExpr && node.toString().equals(bolNode.toString())) {
+                    if (node.getParentNode().orElse(null) instanceof UnaryExpr) {
+                        // i.e. !x -> !!x
+                        //((NameExpr) node).setName("!" + node.toString());
+                        // i.e. !x -> x
+                        node.getParentNode().orElse(null).replace(node);
+                    } else if (node.getParentNode().orElse(null) instanceof BinaryExpr
+                            && !(((BinaryExpr) node.getParentNode().orElse(null)).getOperator().equals(BinaryExpr.Operator.EQUALS)
+                            || (((BinaryExpr) node.getParentNode().orElse(null)).getOperator().equals(BinaryExpr.Operator.NOT_EQUALS)))) {
+                        // i.e. x && y -> !x && !y
+                        ((NameExpr) node).setName("!" + node.toString());
+                    } else if (node.getParentNode().orElse(null) instanceof Statement) {
+                        // i.e. x -> !x
+                        ((NameExpr) node).setName("!" + node.toString());
                     }
                 }
-            }.visitPreOrder(com);
-        });
+            }
+        }.visitPreOrder(com));
     }
 
     private Node hasBooleanVariable(Node node, CompilationUnit com) {
