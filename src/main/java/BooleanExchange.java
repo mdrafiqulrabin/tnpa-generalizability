@@ -76,14 +76,17 @@ public class BooleanExchange extends VoidVisitorAdapter<Object> {
                     } else if (node.getParentNode().orElse(null) instanceof BinaryExpr) {
                         // i.e. x && y -> !x && !y; x == true -> !x == true
                         ((NameExpr) node).setName("!" + node.toString());
-                    } else if (node.getParentNode().orElse(null) instanceof Statement) {
-                        // i.e. x -> !x
+                    } else if (node.getParentNode().orElse(null) instanceof Statement
+                        || node.getParentNode().orElse(null) instanceof MethodCallExpr) {
+                        // i.e. call(x) -> call(!x)
                         ((NameExpr) node).setName("!" + node.toString());
-                    } else if (node.getParentNode().orElse(null) instanceof AssignExpr
-                            && ((AssignExpr) node.getParentNode().orElse(null)).getValue().toString().equals(bolNode.toString())) {
-                        // i.e. y = x; -> y = !x;
-                        AssignExpr parNode = (AssignExpr) node.getParentNode().orElse(null);
-                        parNode.setValue(StaticJavaParser.parseExpression("!" + parNode.getValue()));
+                    } else if (node.getParentNode().orElse(null) instanceof AssignExpr) {
+                        if (((AssignExpr) node.getParentNode().orElse(null)).getValue().toString().equals(bolNode.toString())
+                                || ((AssignExpr) node.getParentNode().orElse(null)).getTarget().toString().equals(bolNode.toString())) {
+                            // i.e. y = x; -> y = !x;
+                            AssignExpr parNode = (AssignExpr) node.getParentNode().orElse(null);
+                            parNode.setValue(StaticJavaParser.parseExpression("!" + parNode.getValue()));
+                        }
                     }
                 }
             }
