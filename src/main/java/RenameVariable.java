@@ -13,21 +13,27 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class RenameVariable extends VoidVisitorAdapter<Object> {
+    private File mJavaFile = null;
     private int mVariableCounter = 0;
-    private ArrayList<Node> mVariableList = new ArrayList<>();
+    private ArrayList<Node> mVariableNodes = new ArrayList<>();
 
     RenameVariable() {
         //System.out.println("\n[ RenameVariable ]\n");
     }
 
     public void inspectSourceCode(File javaFile) {
-        Common.inspectSourceCode(this, javaFile);
+        this.mJavaFile = javaFile;
+        Common.setOutputPath(this, mJavaFile);
+        CompilationUnit root = Common.getParseUnit(mJavaFile);
+        if (root != null) {
+            this.visit(root.clone(), null);
+        }
     }
 
     @Override
     public void visit(CompilationUnit com, Object obj) {
         locateVariableRenaming(com, obj);
-        applyVariableRenaming(com, obj);
+        Common.applyToPlace(this, com, mJavaFile, mVariableNodes);
         super.visit(com, obj);
     }
 
@@ -38,7 +44,7 @@ public class RenameVariable extends VoidVisitorAdapter<Object> {
                 if (isTargetVariable(node, com)) {
                     node.setData(Common.VariableId, mVariableCounter++);
                     node.setData(Common.VariableName, node.toString());
-                    mVariableList.add(node);
+                    mVariableNodes.add(node);
                 }
             }
         }.visitPreOrder(com);
@@ -51,13 +57,13 @@ public class RenameVariable extends VoidVisitorAdapter<Object> {
                         || node.getParentNode().orElse(null) instanceof VariableDeclarator));
     }
 
-    private void applyVariableRenaming(CompilationUnit com, Object obj) {
-        mVariableList.forEach((var_node) -> new TreeVisitor() {
+    public CompilationUnit applyTransformation(CompilationUnit com, Node varNode) {
+        new TreeVisitor() {
             @Override
             public void process(Node node) {
-                String oldName = var_node.getData(Common.VariableName);
+                String oldName = varNode.getData(Common.VariableName);
                 if (node.toString().equals(oldName)) {
-                    String newName = "var" + var_node.getData(Common.VariableId);
+                    String newName = "var" + varNode.getData(Common.VariableId);
                     if (node instanceof SimpleName
                             && !(node.getParentNode().orElse(null) instanceof MethodDeclaration)
                             && !(node.getParentNode().orElse(null) instanceof ClassOrInterfaceDeclaration)) {
@@ -65,6 +71,7 @@ public class RenameVariable extends VoidVisitorAdapter<Object> {
                     }
                 }
             }
-        }.visitPreOrder(com));
+        }.visitPreOrder(com);
+        return com;
     }
 }
