@@ -1,6 +1,6 @@
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
-import com.github.javaparser.ast.expr.*;
+import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.TreeVisitor;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
@@ -11,8 +11,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@SuppressWarnings({"WeakerAccess", "unused"})
+@SuppressWarnings({"WeakerAccess", "unused", "unchecked"})
 public class PermuteStatement extends VoidVisitorAdapter<Object> {
+    private File mJavaFile = null;
     private ArrayList<Node> mStatementNodes = new ArrayList<>();
 
     PermuteStatement() {
@@ -20,13 +21,18 @@ public class PermuteStatement extends VoidVisitorAdapter<Object> {
     }
 
     public void inspectSourceCode(File javaFile) {
-        Common.inspectSourceCode(this,javaFile);
+        this.mJavaFile = javaFile;
+        Common.setOutputPath(this, mJavaFile);
+        CompilationUnit root = Common.getParseUnit(mJavaFile);
+        if (root != null) {
+            this.visit(root.clone(), null);
+        }
     }
 
     @Override
     public void visit(CompilationUnit com, Object obj) {
         locateTargetStatements(com, obj);
-        applyPermuteStatement(com, obj);
+        Common.applyToPlace(this, com, mJavaFile, mStatementNodes);
         super.visit(com, obj);
     }
 
@@ -42,28 +48,42 @@ public class PermuteStatement extends VoidVisitorAdapter<Object> {
         //System.out.println("StatementNodes : " + mStatementNodes.size());
     }
 
-    private void applyPermuteStatement(CompilationUnit com, Object obj) {
-        for (int i = 0, j = 1; i < mStatementNodes.size() - 1; i++, j++)
-        {
-            if (mStatementNodes.get(i) instanceof BreakStmt || mStatementNodes.get(j) instanceof BreakStmt
-                    || mStatementNodes.get(i) instanceof ContinueStmt || mStatementNodes.get(j) instanceof ContinueStmt
-                    || mStatementNodes.get(i) instanceof ReturnStmt || mStatementNodes.get(j) instanceof ReturnStmt
-            ) continue;
+    public CompilationUnit applyTransformation(CompilationUnit com, Node stmtNode) {
+        ArrayList<Node> statementNodes = mStatementNodes;
+        int idx = statementNodes.indexOf((Statement)stmtNode);
+        if (idx >= statementNodes.size() - 1  || Common.isNotPermeableStatement(statementNodes.get(idx))
+                || Common.isNotPermeableStatement(statementNodes.get(idx+1))){
+            return com;
+        }
 
-            if (mStatementNodes.get(i).getParentNode().equals(mStatementNodes.get(j).getParentNode())) {
-                List<SimpleName> iIdentifiers = mStatementNodes.get(i).findAll(SimpleName.class);
-                List<SimpleName> jIdentifiers = mStatementNodes.get(j).findAll(SimpleName.class);
-                List<SimpleName> ijIdentifiers = iIdentifiers.stream().filter(jIdentifiers::contains).collect(Collectors.toList());
-                if (ijIdentifiers.size() == 0) {
-                    Statement tmpStmt = new BlockStmt();
-                    mStatementNodes.get(i).replace(tmpStmt);
-                    mStatementNodes.get(j).replace(mStatementNodes.get(i));
-                    tmpStmt.replace(mStatementNodes.get(j));
-                    Collections.swap(mStatementNodes, i, j);
-                    i++; j++;
+        Statement stmti = (Statement) statementNodes.get(idx);
+        Statement stmtj = (Statement) statementNodes.get(idx+1);
+
+        if (stmti.getParentNode().equals(stmtj.getParentNode())) {
+            List<SimpleName> iIdentifiers = stmti.findAll(SimpleName.class);
+            List<SimpleName> jIdentifiers = stmtj.findAll(SimpleName.class);
+            List<SimpleName> ijIdentifiers = iIdentifiers.stream().filter(jIdentifiers::contains).collect(Collectors.toList());
+            if (ijIdentifiers.size() == 0) {
+
+                new TreeVisitor() {
+                    @Override
+                    public void process(Node node) {
+                        if (node.equals(stmti)) {
+                            node.replace(stmtj.clone());
+                            node.setParentNode(stmtj.getParentNode().orElse(null));
+                        } else if (node.equals(stmtj)) {
+                            node.replace(stmti.clone());
+                            node.setParentNode(stmti.getParentNode().orElse(null));
+                        }
+                    }
+                }.visitPreOrder(com);
+
+                if (Common.mApplyAll) {
+                    Collections.swap(mStatementNodes, idx, idx + 1);
                 }
             }
         }
+        return com;
     }
 
 }
