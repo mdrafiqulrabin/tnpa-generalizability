@@ -11,6 +11,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class SwitchConditional extends VoidVisitorAdapter<Object> {
+    private File mJavaFile = null;
     private ArrayList<Node> mSwitchNodes = new ArrayList<>();
 
     SwitchConditional() {
@@ -18,13 +19,18 @@ public class SwitchConditional extends VoidVisitorAdapter<Object> {
     }
 
     public void inspectSourceCode(File javaFile) {
-        Common.inspectSourceCode(this, javaFile);
+        this.mJavaFile = javaFile;
+        Common.setOutputPath(this, mJavaFile);
+        CompilationUnit root = Common.getParseUnit(mJavaFile);
+        if (root != null) {
+            this.visit(root.clone(), null);
+        }
     }
 
     @Override
     public void visit(CompilationUnit com, Object obj) {
         locateConditionals(com, obj);
-        applySwitchTransform();
+        Common.applyToPlace(this, com, mJavaFile, mSwitchNodes);
         super.visit(com, obj);
     }
 
@@ -40,35 +46,41 @@ public class SwitchConditional extends VoidVisitorAdapter<Object> {
         //System.out.println("SwitchNodes : " + mSwitchNodes.size());
     }
 
-    private void applySwitchTransform() {
-        mSwitchNodes.forEach((switchNode) -> {
-            ArrayList<Object> ifStmts = new ArrayList<>();
-            if (((SwitchStmt) switchNode).getEntries().size() == 0) {
-                // empty
-                ifStmts.add(getIfStmt(switchNode, null));
-            } else {
-                BlockStmt defaultBlockStmt = null;
-                for (SwitchEntry switchEntry : ((SwitchStmt) switchNode).getEntries()) {
-                    if (switchEntry.getLabels().size() != 0) {
-                        // cases
-                        ifStmts.add(getIfStmt(switchNode, switchEntry));
+    public CompilationUnit applyTransformation(CompilationUnit com, Node switchNode) {
+        new TreeVisitor() {
+            @Override
+            public void process(Node node) {
+                if (node.equals(switchNode)) {
+                    ArrayList<Object> ifStmts = new ArrayList<>();
+                    if (((SwitchStmt) node).getEntries().size() == 0) {
+                        // empty
+                        ifStmts.add(getIfStmt(node, null));
                     } else {
-                        if (((SwitchStmt) switchNode).getEntries().size() == 1) {
-                            // default without cases
-                            ifStmts.add(getIfStmt(switchNode, switchEntry));
-                        } else {
-                            // default with cases
-                            defaultBlockStmt = getBlockStmt(switchEntry);
+                        BlockStmt defaultBlockStmt = null;
+                        for (SwitchEntry switchEntry : ((SwitchStmt) node).getEntries()) {
+                            if (switchEntry.getLabels().size() != 0) {
+                                // cases
+                                ifStmts.add(getIfStmt(node, switchEntry));
+                            } else {
+                                if (((SwitchStmt) node).getEntries().size() == 1) {
+                                    // default without cases
+                                    ifStmts.add(getIfStmt(node, switchEntry));
+                                } else {
+                                    // default with cases
+                                    defaultBlockStmt = getBlockStmt(switchEntry);
+                                }
+                            }
+                        }
+                        if (defaultBlockStmt != null) ifStmts.add(defaultBlockStmt); // default at end with cases
+                        for (int i = 0; i < ifStmts.size() - 1; i++) {
+                            ((IfStmt) ifStmts.get(i)).setElseStmt((Statement) ifStmts.get(i + 1));
                         }
                     }
-                }
-                if (defaultBlockStmt != null) ifStmts.add(defaultBlockStmt); // default at end with cases
-                for (int i = 0; i < ifStmts.size() - 1; i++) {
-                    ((IfStmt) ifStmts.get(i)).setElseStmt((Statement) ifStmts.get(i + 1));
+                    node.replace((IfStmt) ifStmts.get(0));
                 }
             }
-            switchNode.replace((IfStmt) ifStmts.get(0));
-        });
+        }.visitPreOrder(com);
+        return com;
     }
 
     private Expression getBinaryExpr(Node switchNode, SwitchEntry switchEntry) {
