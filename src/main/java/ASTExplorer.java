@@ -8,14 +8,14 @@ public class ASTExplorer implements Callable<Void> {
 
     ASTExplorer(String inpPath, String outPath) {
         if (!inpPath.endsWith("/")) {
-            inpPath = inpPath + "/";
+            inpPath += "/";
         }
-        Common.mInputPath = inpPath;
+        Common.mRootInputPath = inpPath;
 
         if (!outPath.endsWith("/")) {
-            outPath = outPath + "/";
+            outPath += "/";
         }
-        Common.mOutputPath = outPath;
+        Common.mRootOutputPath = outPath;
     }
 
     @Override
@@ -25,7 +25,7 @@ public class ASTExplorer implements Callable<Void> {
     }
 
     private void inspectDataset() {
-        String input_dir = Common.mInputPath;
+        String input_dir = Common.mRootInputPath;
         ArrayList<File> javaFiles = new ArrayList<>(
                 FileUtils.listFiles(
                         new File(input_dir),
@@ -38,9 +38,12 @@ public class ASTExplorer implements Callable<Void> {
             try {
                 new RenameVariable().inspectSourceCode(javaFile);
                 new BooleanExchange().inspectSourceCode(javaFile);
-                new SwitchConditional().inspectSourceCode(javaFile);
                 new LoopExchange().inspectSourceCode(javaFile);
+                new SwitchConditional().inspectSourceCode(javaFile);
                 new PermuteStatement().inspectSourceCode(javaFile);
+                new UnusedStatement().inspectSourceCode(javaFile);
+                new UnreachableStatement().inspectSourceCode(javaFile);
+                new TryCatch().inspectSourceCode(javaFile);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
