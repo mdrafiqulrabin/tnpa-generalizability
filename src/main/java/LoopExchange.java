@@ -14,6 +14,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class LoopExchange extends VoidVisitorAdapter<Object> {
+    private File mJavaFile = null;
     private ArrayList<Node> mLoopNodes = new ArrayList<>();
 
     LoopExchange() {
@@ -21,13 +22,18 @@ public class LoopExchange extends VoidVisitorAdapter<Object> {
     }
 
     public void inspectSourceCode(File javaFile) {
-        Common.inspectSourceCode(this,javaFile);
+        this.mJavaFile = javaFile;
+        Common.setOutputPath(this, mJavaFile);
+        CompilationUnit root = Common.getParseUnit(mJavaFile);
+        if (root != null) {
+            this.visit(root.clone(), null);
+        }
     }
 
     @Override
     public void visit(CompilationUnit com, Object obj) {
         locateLoops(com, obj);
-        applyLoopExchange();
+        Common.applyToPlace(this, com, mJavaFile, mLoopNodes);
         super.visit(com, obj);
     }
 
@@ -43,27 +49,33 @@ public class LoopExchange extends VoidVisitorAdapter<Object> {
         //System.out.println("LoopNodes : " + mLoopNodes.size());
     }
 
-    private void applyLoopExchange() {
-        mLoopNodes.forEach((loopNode) -> {
-            if (loopNode instanceof WhileStmt) {
-                ForStmt nodeForStmt = new ForStmt();
-                nodeForStmt.setCompare(((WhileStmt) loopNode).getCondition());
-                nodeForStmt.setBody(((WhileStmt) loopNode).getBody());
-                loopNode.replace(nodeForStmt);
-            } else if (loopNode instanceof ForStmt) {
-                if (((ForStmt) loopNode).getInitialization().size() != 0) {
-                    BlockStmt outerBlockStmt = new BlockStmt();
-                    for (Expression exp : ((ForStmt) loopNode).getInitialization()) {
-                        outerBlockStmt.addStatement(exp);
+    public CompilationUnit applyTransformation(CompilationUnit com, Node loopNode) {
+        new TreeVisitor() {
+            @Override
+            public void process(Node node) {
+                if (node.equals(loopNode)) {
+                    if (loopNode instanceof WhileStmt) {
+                        ForStmt nodeForStmt = new ForStmt();
+                        nodeForStmt.setCompare(((WhileStmt) node).getCondition());
+                        nodeForStmt.setBody(((WhileStmt) node).getBody());
+                        node.replace(nodeForStmt);
+                    } else if (loopNode instanceof ForStmt) {
+                        if (((ForStmt) node).getInitialization().size() != 0) {
+                            BlockStmt outerBlockStmt = new BlockStmt();
+                            for (Expression exp : ((ForStmt) node).getInitialization()) {
+                                outerBlockStmt.addStatement(exp);
+                            }
+                            WhileStmt nodeWhileStmt = getWhileStmt(node);
+                            outerBlockStmt.addStatement(nodeWhileStmt);
+                            node.replace(outerBlockStmt);
+                        } else {
+                            node.replace(getWhileStmt(node));
+                        }
                     }
-                    WhileStmt nodeWhileStmt = getWhileStmt(loopNode);
-                    outerBlockStmt.addStatement(nodeWhileStmt);
-                    loopNode.replace(outerBlockStmt);
-                } else {
-                    loopNode.replace(getWhileStmt(loopNode));
                 }
             }
-        });
+        }.visitPreOrder(com);
+        return com;
     }
 
     private WhileStmt getWhileStmt(Node loopNode) {
