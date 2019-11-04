@@ -64,12 +64,12 @@ public class BooleanExchange extends VoidVisitorAdapter<Object> {
                                 || node.getParentNode().orElse(null) instanceof VariableDeclarator
                                 || node.getParentNode().orElse(null) instanceof MethodCallExpr) {
                             // i.e. x == true -> !x == true; call(x) -> call(!x)
-                            ((NameExpr) node).setName(getExpStr(node));
+                            ((NameExpr) node).setName(getNotExpStr(node));
                         } else if (node.getParentNode().orElse(null) instanceof AssignExpr) {
                             AssignExpr parNode = (AssignExpr) node.getParentNode().orElse(null);
                             if (parNode.getValue().toString().equals(bolNode.toString())) {
                                 // i.e. y = x; -> y = !x;
-                                parNode.setValue(StaticJavaParser.parseExpression(getExpStr(parNode.getValue())));
+                                parNode.setValue(StaticJavaParser.parseExpression(getNotExpStr(parNode.getValue())));
                             } else if (parNode.getTarget().toString().equals(bolNode.toString())){
                                 // i.e. x = r() && x; -> x = !(r() && !x);
                                 new TreeVisitor() {
@@ -79,12 +79,12 @@ public class BooleanExchange extends VoidVisitorAdapter<Object> {
                                             if (node.getParentNode().orElse(null) instanceof UnaryExpr) {
                                                 node.getParentNode().orElse(null).replace(node);
                                             } else if (node instanceof NameExpr){
-                                                ((NameExpr) node).setName(getExpStr(node));
+                                                ((NameExpr) node).setName(getNotExpStr(node));
                                             }
                                         }
                                     }
                                 }.visitPreOrder(parNode.getValue());
-                                parNode.setValue(StaticJavaParser.parseExpression(getExpStr(parNode.getValue())));
+                                parNode.setValue(StaticJavaParser.parseExpression(getNotExpStr(parNode.getValue())));
                             }
                         }
                     } else if (node instanceof SimpleName) {
@@ -93,7 +93,7 @@ public class BooleanExchange extends VoidVisitorAdapter<Object> {
                             if (parNode.getName().asString().equals(bolNode.toString()) && parNode.getInitializer().isPresent()) {
                                 //i.e. boolean x = true; -> boolean x = false;
                                 Expression expVal = parNode.getInitializer().get();
-                                expVal.replace(StaticJavaParser.parseExpression(getExpStr(expVal)));
+                                expVal.replace(StaticJavaParser.parseExpression(getNotExpStr(expVal)));
                             }
                         }
                     }
@@ -103,7 +103,7 @@ public class BooleanExchange extends VoidVisitorAdapter<Object> {
         return com;
     }
 
-    private String getExpStr(Node node) {
+    private String getNotExpStr(Node node) {
         if (node instanceof BooleanLiteralExpr) {
             boolean val = !((BooleanLiteralExpr)node).getValue();
             return String.valueOf(val);
