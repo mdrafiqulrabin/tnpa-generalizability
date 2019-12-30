@@ -53,10 +53,7 @@ public class UnreachableStatement extends VoidVisitorAdapter<Object> {
     }
 
     private Statement getUnreachableStatement() {
-        String unreachableStr = "while(false){" +
-                "\n // this is an unreachable statement" +
-                "\n double rand_next_double = " + new Random().nextDouble() + ";" +
-                "\n }";
+        String unreachableStr = "if(false){System.out.println(\"an unreachable statement\");}";
         return StaticJavaParser.parseStatement(unreachableStr);
     }
 }
