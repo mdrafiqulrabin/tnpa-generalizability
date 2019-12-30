@@ -18,7 +18,6 @@ public final class Common {
     static String mRootInputPath = "";
     static String mRootOutputPath = "";
     static String mSavePath = "";
-    static boolean mApplyAll = true;
 
     static final DataKey<Integer> VariableId = new DataKey<Integer>() {};
     static final DataKey<String> VariableName = new DataKey<String>() {};
@@ -61,7 +60,6 @@ public final class Common {
 
     static void applyToPlace(Object obj, CompilationUnit com, File javaFile, ArrayList<Node> nodeList) {
         // apply to single place
-        Common.mApplyAll = false;
         for (int i = 0; i < nodeList.size(); i++) {
             Node node = nodeList.get(i);
             CompilationUnit newCom = applyByObj(obj, javaFile, com.clone(), node.clone());
@@ -71,8 +69,7 @@ public final class Common {
         }
 
         // apply to all place
-        Common.mApplyAll = true;
-        if ( nodeList.size() > 1) {
+        if (nodeList.size() > 1) {
             CompilationUnit oldCom = com.clone();
             nodeList.forEach((node) -> applyByObj(obj, javaFile, com, node));
             if (Common.checkTransformation(oldCom, com, javaFile, true)) {
