@@ -3,10 +3,9 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
-import com.github.javaparser.ast.stmt.BlockStmt;
-import com.github.javaparser.ast.stmt.EmptyStmt;
-import com.github.javaparser.ast.stmt.ExpressionStmt;
-import com.github.javaparser.ast.stmt.Statement;
+import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.SimpleName;
+import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
 import java.io.File;
@@ -39,36 +38,39 @@ public class TryCatch extends VoidVisitorAdapter<Object> {
     }
 
     public CompilationUnit applyTransformation(CompilationUnit com, Node unused) {
+        if (com.findAll(TryStmt.class).size() > 0
+                || com.findAll(MethodCallExpr.class).size() == 0) {
+            return com;
+        }
+
         BlockStmt blockStmt = new BlockStmt();
         BlockStmt tcBlockStmt = new BlockStmt();
         for (Statement statement : com.findFirst(MethodDeclaration.class)
                 .flatMap(MethodDeclaration::getBody).get().getStatements()) {
             boolean flag = true;
-            if (statement instanceof ExpressionStmt) {
+            if (Common.isNotPermeableStatement(statement)
+                    || statement.findAll(MethodCallExpr.class).size() == 0) {
+                flag = false;
+            } else if (statement instanceof ExpressionStmt) {
                 for (Node node : statement.getChildNodes()) {
                     if (node.findFirst(VariableDeclarator.class).isPresent()) {
                         flag = false;
                         break;
                     }
                 }
-            } else if (Common.isNotPermeableStatement(statement)) {
-                flag = false;
             }
             if (flag) {
                 tcBlockStmt.addStatement(statement);
             }
             blockStmt.addStatement(statement);
         }
+
         if (tcBlockStmt.getStatements().size() > 0) {
             int min = 0, max = tcBlockStmt.getStatements().size() - 1;
             int place = new Random().nextInt(max - min + 1) + min;
             Statement tcStmt = tcBlockStmt.getStatements().get(place);
             blockStmt.replace(tcStmt, getTryCatchStatement(tcStmt));
-        } /*else { // TODO, i.e. {int r = result(); return r;}
-            Statement tcStmt = getTryCatchStatement(blockStmt.clone());
-            blockStmt = new BlockStmt();
-            blockStmt.addStatement(tcStmt);
-        }*/
+        }
 
         if (com.findFirst(MethodDeclaration.class).isPresent()) {
             MethodDeclaration md = com.findFirst(MethodDeclaration.class).get();
