@@ -1,7 +1,9 @@
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.SimpleName;
 import com.github.javaparser.ast.stmt.EmptyStmt;
+import com.github.javaparser.ast.stmt.ExpressionStmt;
 import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.visitor.TreeVisitor;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
@@ -14,7 +16,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class PermuteStatement extends VoidVisitorAdapter<Object> {
     private File mJavaFile = null;
-    private ArrayList<Node> mStatementNodes = new ArrayList<>();
+    private ArrayList<ArrayList<Node>> mBasicBlockNodes = new ArrayList<>();
     private ArrayList<Node> mDummyNodes = new ArrayList<>();
 
     PermuteStatement() {
@@ -32,50 +34,60 @@ public class PermuteStatement extends VoidVisitorAdapter<Object> {
 
     @Override
     public void visit(CompilationUnit com, Object obj) {
-        mStatementNodes = locateTargetStatements(com, obj);
+        mBasicBlockNodes = locateBasicBlockStatements(com, obj);
         mDummyNodes.add(new EmptyStmt());
         Common.applyToPlace(this, com, mJavaFile, mDummyNodes);
         super.visit(com, obj);
     }
 
-    private ArrayList<Node> locateTargetStatements(CompilationUnit com, Object obj) {
-        ArrayList<Node> statementNodes = new ArrayList<>();
+    private ArrayList<ArrayList<Node>> locateBasicBlockStatements(CompilationUnit com, Object obj) {
+        ArrayList<Node> innerStatementNodes = new ArrayList<>();
+        ArrayList<ArrayList<Node>> basicBlockNodes = new ArrayList<>();
         new TreeVisitor() {
             @Override
             public void process(Node node) {
-                if (node instanceof Statement
+                if (node instanceof ExpressionStmt
+                        && node.findAll(MethodCallExpr.class).size() == 0
                         && !Common.isNotPermeableStatement(node)) {
-                    statementNodes.add(node);
+                    innerStatementNodes.add(node);
+                } else {
+                    if (innerStatementNodes.size() > 1) {
+                        basicBlockNodes.add(new ArrayList<>(innerStatementNodes));
+                    }
+                    innerStatementNodes.clear();
                 }
             }
         }.visitBreadthFirst(com);
-        return statementNodes;
+        return basicBlockNodes;
     }
 
     public CompilationUnit applyTransformation(CompilationUnit com, Node unused) {
         int cnt = 0;
-        for (int i=0; i < mStatementNodes.size(); i++) {
-            for (int j=i+1; j < mStatementNodes.size(); j++) {
-                Statement stmti = (Statement) mStatementNodes.get(i);
-                Statement stmtj = (Statement) mStatementNodes.get(j);
-                if (stmti.getParentNode().equals(stmtj.getParentNode())) {
-                    List<SimpleName> iIdentifiers = stmti.findAll(SimpleName.class);
-                    List<SimpleName> jIdentifiers = stmtj.findAll(SimpleName.class);
-                    List<SimpleName> ijIdentifiers = iIdentifiers.stream()
-                            .filter(jIdentifiers::contains).collect(Collectors.toList());
-                    if (ijIdentifiers.size() == 0) { //dependency check between i & j statement
-                        List<SimpleName> bIdentifiers = new ArrayList<>();
-                        for (int b=i+1; b<j; b++) {
-                            Statement stmtb = (Statement) mStatementNodes.get(b);
-                            bIdentifiers.addAll(stmtb.findAll(SimpleName.class));
-                        }
-                        List<SimpleName> ibIdentifiers = iIdentifiers.stream()
-                                .filter(bIdentifiers::contains).collect(Collectors.toList());
-                        if (ibIdentifiers.size() == 0) { //dependency check among i & internal statements
-                            List<SimpleName> jbIdentifiers = jIdentifiers.stream()
+        for (int k = 0; k < mBasicBlockNodes.size(); k++) {
+            ArrayList<Node> basicBlockNodes = mBasicBlockNodes.get(k);
+            for (int i = 0; i < basicBlockNodes.size(); i++) {
+                for (int j = i + 1; j < basicBlockNodes.size(); j++) {
+                    Statement stmt_i = (Statement) basicBlockNodes.get(i);
+                    Statement stmt_j = (Statement) basicBlockNodes.get(j);
+                    if (stmt_i.getParentNode().equals(stmt_j.getParentNode())) {
+                        List<SimpleName> iIdentifiers = stmt_i.findAll(SimpleName.class);
+                        List<SimpleName> jIdentifiers = stmt_j.findAll(SimpleName.class);
+                        List<SimpleName> ijIdentifiers = iIdentifiers.stream()
+                                .filter(jIdentifiers::contains).collect(Collectors.toList());
+                        if (ijIdentifiers.size() == 0) { //dependency check between i & j statement
+                            List<SimpleName> bIdentifiers = new ArrayList<>();
+                            for (int b = i + 1; b < j; b++) {
+                                Statement stmtb = (Statement) basicBlockNodes.get(b);
+                                bIdentifiers.addAll(stmtb.findAll(SimpleName.class));
+                            }
+                            List<SimpleName> ibIdentifiers = iIdentifiers.stream()
                                     .filter(bIdentifiers::contains).collect(Collectors.toList());
-                            if (jbIdentifiers.size() == 0) { //dependency check among j & internal statements
-                                swapStatementNodes(com, i, j, ++cnt);
+                            if (ibIdentifiers.size() == 0) { //dependency check among i & internal statements
+                                List<SimpleName> jbIdentifiers = jIdentifiers.stream()
+                                        .filter(bIdentifiers::contains).collect(Collectors.toList());
+                                if (jbIdentifiers.size() == 0) { //dependency check among j & internal statements
+                                    swapStatementNodes(com, k, i, j, ++cnt);
+                                }
                             }
                         }
                     }
@@ -85,13 +97,13 @@ public class PermuteStatement extends VoidVisitorAdapter<Object> {
         return null;
     }
 
-    private void swapStatementNodes(CompilationUnit com, int i, int j, int cnt) {
+    private void swapStatementNodes(CompilationUnit com, int k, int i, int j, int cnt) {
         CompilationUnit newCom = com.clone();
-        ArrayList<Node> statementNodes = locateTargetStatements(newCom, null);
-        Statement stmti = (Statement) statementNodes.get(i);
-        Statement stmtj = (Statement) statementNodes.get(j);
-        stmti.replace(stmtj.clone());
-        stmtj.replace(stmti.clone());
+        ArrayList<ArrayList<Node>> statementNodes = locateBasicBlockStatements(newCom, null);
+        Statement stmt_i = (Statement) statementNodes.get(k).get(i);
+        Statement stmt_j = (Statement) statementNodes.get(k).get(j);
+        stmt_i.replace(stmt_j.clone());
+        stmt_j.replace(stmt_i.clone());
         Common.saveTransformation(newCom, mJavaFile, String.valueOf(cnt));
     }
 
