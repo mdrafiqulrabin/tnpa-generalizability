@@ -69,7 +69,7 @@ public final class Common {
         }
 
         // apply to all place
-        if (nodeList.size() > 1) {
+        if (nodeList.size() > 1 && isAllPlaceApplicable(obj)) {
             CompilationUnit oldCom = com.clone();
             nodeList.forEach((node) -> applyByObj(obj, javaFile, com, node));
             if (Common.checkTransformation(oldCom, com, javaFile, true)) {
@@ -93,8 +93,8 @@ public final class Common {
                 newCom = ((PermuteStatement) obj).applyTransformation(com, node);
             } else if (obj instanceof UnusedStatement) {
                 newCom = ((UnusedStatement) obj).applyTransformation(com, node);
-            } else if (obj instanceof UnreachableStatement) {
-                newCom = ((UnreachableStatement) obj).applyTransformation(com, node);
+            } else if (obj instanceof LogStatement) {
+                newCom = ((LogStatement) obj).applyTransformation(com, node);
             } else if (obj instanceof TryCatch) {
                 newCom = ((TryCatch) obj).applyTransformation(com, node);
             }
@@ -164,4 +164,10 @@ public final class Common {
                 || node instanceof ReturnStmt);
     }
 
+    static boolean isAllPlaceApplicable(Object obj) {
+        return (obj instanceof RenameVariable
+                || obj instanceof BooleanExchange
+                || obj instanceof LoopExchange
+                || obj instanceof SwitchConditional);
+    }
 }

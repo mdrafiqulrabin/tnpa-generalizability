@@ -42,7 +42,7 @@ public class ASTExplorer implements Callable<Void> {
                 new SwitchConditional().inspectSourceCode(javaFile);
                 new PermuteStatement().inspectSourceCode(javaFile);
                 new UnusedStatement().inspectSourceCode(javaFile);
-                new UnreachableStatement().inspectSourceCode(javaFile);
+                new LogStatement().inspectSourceCode(javaFile);
                 new TryCatch().inspectSourceCode(javaFile);
             } catch (Exception ex) {
                 ex.printStackTrace();

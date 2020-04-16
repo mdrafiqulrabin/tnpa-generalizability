@@ -12,12 +12,12 @@ import java.util.ArrayList;
 import java.util.Random;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
-public class UnreachableStatement extends VoidVisitorAdapter<Object> {
+public class LogStatement extends VoidVisitorAdapter<Object> {
     private File mJavaFile = null;
     private ArrayList<Node> mDummyNodes = new ArrayList<>();
 
-    UnreachableStatement() {
-        //System.out.println("\n[ UnreachableStatement ]\n");
+    LogStatement() {
+        //System.out.println("\n[ LogStatement ]\n");
     }
 
     public void inspectSourceCode(File javaFile) {
@@ -42,9 +42,7 @@ public class UnreachableStatement extends VoidVisitorAdapter<Object> {
                 .flatMap(MethodDeclaration::getBody).get().getStatements()) {
             blockStmt.addStatement(statement);
         }
-        int min = 0, max = blockStmt.getStatements().size() - 1;
-        int place = new Random().nextInt(max - min + 1) + min;
-        blockStmt.addStatement(place, getUnreachableStatement());
+        blockStmt.addStatement(0, getLogStatement()); //beginning of stmt
         if (com.findFirst(MethodDeclaration.class).isPresent()) {
             MethodDeclaration md = com.findFirst(MethodDeclaration.class).get();
             md.setBody(blockStmt);
@@ -52,8 +50,8 @@ public class UnreachableStatement extends VoidVisitorAdapter<Object> {
         return com;
     }
 
-    private Statement getUnreachableStatement() {
-        String unreachableStr = "if(false){System.out.println(\"an unreachable statement\");}";
-        return StaticJavaParser.parseStatement(unreachableStr);
+    private Statement getLogStatement() {
+        String logStr = "System.out.println(\"dummy log\");";
+        return StaticJavaParser.parseStatement(logStr);
     }
 }
