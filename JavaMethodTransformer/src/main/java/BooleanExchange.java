@@ -8,49 +8,40 @@ import com.github.javaparser.ast.type.PrimitiveType;
 import com.github.javaparser.ast.visitor.TreeVisitor;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Objects;
 
-@SuppressWarnings({"WeakerAccess", "unused"})
+
 public class BooleanExchange extends VoidVisitorAdapter<Object> {
-    private File mJavaFile = null;
-    private ArrayList<Node> mBooleanNodes = new ArrayList<>();
+    private final ArrayList<Node> mBooleanNodes = new ArrayList<>();
 
-    BooleanExchange() {
-        //System.out.println("\n[ BooleanExchange ]\n");
-    }
+    BooleanExchange() { }
 
-    public void inspectSourceCode(File javaFile) {
-        this.mJavaFile = javaFile;
-        Common.setOutputPath(this, mJavaFile);
-        CompilationUnit root = Common.getParseUnit(mJavaFile);
-        if (root != null) {
-            this.visit(root.clone(), null);
-        }
+    public void inspectSourceCode(CompilationUnit cu) {
+        Common.setOutputPath(this);
+        this.visit(cu, null);
     }
 
     @Override
-    public void visit(CompilationUnit com, Object obj) {
-        locateBooleanVariables(com, obj);
-        Common.applyToPlace(this, com, mJavaFile, mBooleanNodes);
-        super.visit(com, obj);
+    public void visit(CompilationUnit cu, Object obj) {
+        locateBooleanVariables(cu);
+        Common.applyToPlace(this, cu, mBooleanNodes);
+        super.visit(cu, obj);
     }
 
-    private void locateBooleanVariables(CompilationUnit com, Object obj) {
+    private void locateBooleanVariables(CompilationUnit cu) {
         new TreeVisitor() {
             @Override
             public void process(Node node) {
-                Node booleanNode = getBooleanVariable(node, com);
+                Node booleanNode = getBooleanVariable(node);
                 if (booleanNode != null) {
                     mBooleanNodes.add(booleanNode);
                 }
             }
-        }.visitPreOrder(com);
-        //System.out.println("BooleanVariable : " + mBooleanList);
+        }.visitPreOrder(cu);
     }
 
-    public CompilationUnit applyTransformation(CompilationUnit com, Node bolNode) {
+    public CompilationUnit applyTransformation(CompilationUnit cu, Node bolNode) {
         new TreeVisitor() {
             @Override
             public void process(Node node) {
@@ -88,9 +79,11 @@ public class BooleanExchange extends VoidVisitorAdapter<Object> {
                             }
                         }
                     } else if (node instanceof SimpleName) {
-                        if (node.getParentNode().isPresent() && node.getParentNode().orElse(null) instanceof VariableDeclarator) {
+                        if (node.getParentNode().isPresent()
+                                && node.getParentNode().orElse(null) instanceof VariableDeclarator) {
                             VariableDeclarator parNode = (VariableDeclarator) node.getParentNode().orElse(null);
-                            if (parNode.getName().asString().equals(bolNode.toString()) && parNode.getInitializer().isPresent()) {
+                            if (parNode.getName().asString().equals(bolNode.toString())
+                                    && parNode.getInitializer().isPresent()) {
                                 //i.e. boolean x = true; -> boolean x = false;
                                 Expression expVal = parNode.getInitializer().get();
                                 expVal.replace(StaticJavaParser.parseExpression(getNotExpStr(expVal)));
@@ -99,8 +92,8 @@ public class BooleanExchange extends VoidVisitorAdapter<Object> {
                     }
                 }
             }
-        }.visitPreOrder(com);
-        return com;
+        }.visitPreOrder(cu);
+        return cu;
     }
 
     private String getNotExpStr(Node node) {
@@ -118,7 +111,7 @@ public class BooleanExchange extends VoidVisitorAdapter<Object> {
         }
     }
 
-    private Node getBooleanVariable(Node node, CompilationUnit com) {
+    private Node getBooleanVariable(Node node) {
         if (node.toString().equalsIgnoreCase(PrimitiveType.booleanType().asString())
                 && node.getParentNode().orElse(null) instanceof VariableDeclarator) {
             VariableDeclarator parentNode = (VariableDeclarator) node.getParentNode().get();

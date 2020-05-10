@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.uhserg.tnpa.javatransformer</groupId>
-    <artifactId>JavaTransformer</artifactId>
+    <groupId>com.uhserg.tnpa.javamethodtransformer</groupId>
+    <artifactId>JavaMethodTransformer</artifactId>
     <version>1.0</version>
 
     <build>
@@ -13,7 +13,7 @@
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>
-                    <finalName>jar/JavaTransformer</finalName>
+                    <finalName>jar/JavaMethodTransformer</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                     <archive>
                         <manifest>
@@ -58,6 +58,5 @@
             <version>3.9</version>
         </dependency>
     </dependencies>
-
 
 </project>

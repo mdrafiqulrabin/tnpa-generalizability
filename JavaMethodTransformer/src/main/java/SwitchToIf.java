@@ -6,35 +6,27 @@ import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.TreeVisitor;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
-import java.io.File;
 import java.util.ArrayList;
 
-@SuppressWarnings({"WeakerAccess", "unused"})
-public class SwitchConditional extends VoidVisitorAdapter<Object> {
-    private File mJavaFile = null;
-    private ArrayList<Node> mSwitchNodes = new ArrayList<>();
 
-    SwitchConditional() {
-        //System.out.println("\n[ SwitchConditional ]\n");
-    }
+public class SwitchToIf extends VoidVisitorAdapter<Object> {
+    private final ArrayList<Node> mSwitchNodes = new ArrayList<>();
 
-    public void inspectSourceCode(File javaFile) {
-        this.mJavaFile = javaFile;
-        Common.setOutputPath(this, mJavaFile);
-        CompilationUnit root = Common.getParseUnit(mJavaFile);
-        if (root != null) {
-            this.visit(root.clone(), null);
-        }
+    SwitchToIf() { }
+
+    public void inspectSourceCode(CompilationUnit cu) {
+        Common.setOutputPath(this);
+        this.visit(cu, null);
     }
 
     @Override
-    public void visit(CompilationUnit com, Object obj) {
-        locateConditionals(com, obj);
-        Common.applyToPlace(this, com, mJavaFile, mSwitchNodes);
-        super.visit(com, obj);
+    public void visit(CompilationUnit cu, Object obj) {
+        locateSwitches(cu);
+        Common.applyToPlace(this, cu, mSwitchNodes);
+        super.visit(cu, obj);
     }
 
-    private void locateConditionals(CompilationUnit com, Object obj) {
+    private void locateSwitches(CompilationUnit cu) {
         new TreeVisitor() {
             @Override
             public void process(Node node) {
@@ -42,8 +34,7 @@ public class SwitchConditional extends VoidVisitorAdapter<Object> {
                     mSwitchNodes.add(node);
                 }
             }
-        }.visitPreOrder(com);
-        //System.out.println("SwitchNodes : " + mSwitchNodes.size());
+        }.visitPreOrder(cu);
     }
 
     public CompilationUnit applyTransformation(CompilationUnit com, Node switchNode) {
@@ -111,5 +102,4 @@ public class SwitchConditional extends VoidVisitorAdapter<Object> {
         ifStmt.setThenStmt(getBlockStmt(switchEntry));
         return ifStmt;
     }
-
 }

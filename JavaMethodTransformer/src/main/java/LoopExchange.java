@@ -9,35 +9,27 @@ import com.github.javaparser.ast.stmt.WhileStmt;
 import com.github.javaparser.ast.visitor.TreeVisitor;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
-import java.io.File;
 import java.util.ArrayList;
 
-@SuppressWarnings({"WeakerAccess", "unused"})
+
 public class LoopExchange extends VoidVisitorAdapter<Object> {
-    private File mJavaFile = null;
-    private ArrayList<Node> mLoopNodes = new ArrayList<>();
+    private final ArrayList<Node> mLoopNodes = new ArrayList<>();
 
-    LoopExchange() {
-        //System.out.println("\n[ LoopExchange ]\n");
-    }
+    LoopExchange() { }
 
-    public void inspectSourceCode(File javaFile) {
-        this.mJavaFile = javaFile;
-        Common.setOutputPath(this, mJavaFile);
-        CompilationUnit root = Common.getParseUnit(mJavaFile);
-        if (root != null) {
-            this.visit(root.clone(), null);
-        }
+    public void inspectSourceCode(CompilationUnit cu) {
+        Common.setOutputPath(this);
+        this.visit(cu, null);
     }
 
     @Override
-    public void visit(CompilationUnit com, Object obj) {
-        locateLoops(com, obj);
-        Common.applyToPlace(this, com, mJavaFile, mLoopNodes);
-        super.visit(com, obj);
+    public void visit(CompilationUnit cu, Object obj) {
+        locateLoops(cu);
+        Common.applyToPlace(this, cu, mLoopNodes);
+        super.visit(cu, obj);
     }
 
-    private void locateLoops(CompilationUnit com, Object obj) {
+    private void locateLoops(CompilationUnit cu) {
         new TreeVisitor() {
             @Override
             public void process(Node node) {
@@ -45,11 +37,10 @@ public class LoopExchange extends VoidVisitorAdapter<Object> {
                     mLoopNodes.add(node);
                 }
             }
-        }.visitPreOrder(com);
-        //System.out.println("LoopNodes : " + mLoopNodes.size());
+        }.visitPreOrder(cu);
     }
 
-    public CompilationUnit applyTransformation(CompilationUnit com, Node loopNode) {
+    public CompilationUnit applyTransformation(CompilationUnit cu, Node loopNode) {
         new TreeVisitor() {
             @Override
             public void process(Node node) {
@@ -74,8 +65,8 @@ public class LoopExchange extends VoidVisitorAdapter<Object> {
                     }
                 }
             }
-        }.visitPreOrder(com);
-        return com;
+        }.visitPreOrder(cu);
+        return cu;
     }
 
     private WhileStmt getWhileStmt(Node loopNode) {
@@ -106,5 +97,4 @@ public class LoopExchange extends VoidVisitorAdapter<Object> {
         }
         return nodeWhileStmt;
     }
-
 }
