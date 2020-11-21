@@ -9,10 +9,12 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 
 
 public final class Common {
 
+    static double TH_PERCENT = 0;
     static String ROOT_INPUT_DIR = "";
     static String ROOT_OUTPUT_DIR = "";
     static File CURRENT_JAVA_FILE = null;
@@ -121,5 +123,31 @@ public final class Common {
                 || obj instanceof BooleanExchange
                 || obj instanceof LoopExchange
                 || obj instanceof SwitchToIf);
+    }
+
+    /*
+        - X%-transformation
+            - Main.Java: Common.TH_PERCENT = args[0]
+            - VariableRenaming.Java: mVariableNodes = Common.getThList(mVariableNodes)
+     */
+    static ArrayList<Node> getThList(ArrayList<Node> nodeList) {
+        int p = (int) Math.round(Common.TH_PERCENT/25);
+        if (p == 4) {
+            return nodeList;
+        } else if (nodeList.size() == 1) {
+            nodeList.clear();
+        } else if (nodeList.size() == 2 && p != 2) {
+            nodeList.clear();
+        } else {
+            int kN = (int) Math.round(nodeList.size() * Common.TH_PERCENT/100);
+            if (kN > 0) {
+                Collections.shuffle(nodeList);
+                int dK = nodeList.size() - kN;
+                nodeList.subList(0, dK).clear();
+            } else {
+                nodeList.clear();
+            }
+        }
+        return nodeList;
     }
 }

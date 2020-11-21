@@ -26,6 +26,7 @@ public class ASTExplorer implements Callable<Void> {
         );
         System.out.println(inputDir + " : " + javaFiles.size());
 
+        // TODO: apply parallel execution
         javaFiles.forEach((javaFile) -> {
             try {
                 CompilationUnit cu = Common.getParseUnit(javaFile);
@@ -39,6 +40,7 @@ public class ASTExplorer implements Callable<Void> {
 
     private void invokeTransformations(CompilationUnit cu) {
         try {
+            // TODO: apply parallel execution
             new VariableRenaming().inspectSourceCode(cu.clone());
             new PermuteStatement().inspectSourceCode(cu.clone());
             new UnusedStatement().inspectSourceCode(cu.clone());

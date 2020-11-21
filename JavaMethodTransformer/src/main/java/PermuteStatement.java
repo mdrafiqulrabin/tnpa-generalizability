@@ -90,12 +90,12 @@ public class PermuteStatement extends VoidVisitorAdapter<Object> {
     }
 
     private void swapStatementNodes(CompilationUnit cu, int k, int i, int j, int cnt) {
-        CompilationUnit newCom = cu.clone();
-        ArrayList<ArrayList<Node>> statementNodes = locateBasicBlockStatements(newCom);
+        CompilationUnit newCu = cu.clone();
+        ArrayList<ArrayList<Node>> statementNodes = locateBasicBlockStatements(newCu);
         Statement stmt_i = (Statement) statementNodes.get(k).get(i);
         Statement stmt_j = (Statement) statementNodes.get(k).get(j);
         stmt_i.replace(stmt_j.clone());
         stmt_j.replace(stmt_i.clone());
-        Common.saveTransformation(newCom, String.valueOf(cnt));
+        Common.saveTransformation(newCu, String.valueOf(cnt));
     }
 }
