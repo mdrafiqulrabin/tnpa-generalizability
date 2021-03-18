@@ -1,6 +1,6 @@
 ## Semantic-Preserving Program Transformations
 
-This project contains the program transformation tool and the datasets of transformed programs for the paper '[On the Generalizability of Neural Program Models with respect to Semantic-Preserving Program Transformations](https://arxiv.org/abs/2008.01566)'.
+This project contains the program transformation tool and the datasets of transformed programs for the paper 'On the Generalizability of Neural Program Models with respect to Semantic-Preserving Program Transformations' ([arXiv](https://arxiv.org/abs/2008.01566), [ScienceDirect](https://doi.org/10.1016/j.infsof.2021.106552)) accepted at the [IST Journal, Elsevier 2021](https://www.journals.elsevier.com/information-and-software-technology).
 
 ## Structure
 
@@ -45,8 +45,8 @@ Create the jar file ([JavaMethodTransformer.jar](https://github.com/mdrafiqulrab
 
 ## Datasets of Transformed Methods:
 
-  * [all-place](https://uh.edu/serg/data/artifacts/tnpa-generalizability/transformed_methods/all-place.zip) - apply the transformation to each candidate location separately.
-  * [single-place](https://uh.edu/serg/data/artifacts/tnpa-generalizability/transformed_methods/single-place.zip) - apply the transformation to all candidate locations simultaneously.
+  * [single-place](https://uh.edu/serg/data/artifacts/tnpa-generalizability/transformed_methods/single-place.zip) - apply the transformation to each candidate location separately.
+  * [all-place](https://uh.edu/serg/data/artifacts/tnpa-generalizability/transformed_methods/all-place.zip) - apply the transformation to all candidate locations simultaneously.
   * [x-percent](https://uh.edu/serg/data/artifacts/tnpa-generalizability/transformed_methods/x-percent.zip) - apply the transformation to randomly selected X\% candidate locations, where X = [25, 50, 75].
 
 ---
@@ -83,5 +83,25 @@ Create the jar file ([JavaMethodTransformer.jar](https://github.com/mdrafiqulrab
 
   * Original Java Datasets:
     * [Java-Small, Java-Med, and Java-Large](https://github.com/tech-srl/code2seq/#java)
+
+- - -
+
+# Citation:
+
+[On the Generalizability of Neural Program Models with respect to Semantic-Preserving Program Transformations](https://doi.org/10.1016/j.infsof.2021.106552)
+
+```
+@article{rabin2021generalizability,
+  title = {On the generalizability of Neural Program Models with respect to semantic-preserving program transformations},
+  author = {Md Rafiqul Islam Rabin and Nghi D.Q. Bui and Ke Wang and Yijun Yu and Lingxiao Jiang and Mohammad Amin Alipour},
+  journal = {Information and Software Technology},
+  volume = {135},
+  pages = {106552},
+  year = {2021},
+  issn = {0950-5849},
+  doi = {https://doi.org/10.1016/j.infsof.2021.106552},
+  url = {https://www.sciencedirect.com/science/article/pii/S0950584921000379}
+}
+```
 
 - - -
