@@ -84,7 +84,7 @@ Create the jar file ([JavaMethodTransformer.jar](https://github.com/mdrafiqulrab
   * Original Java Datasets:
     * [Java-Small, Java-Med, and Java-Large](https://github.com/tech-srl/code2seq/#java)
 
-- - -
+---
 
 # Citation:
 
@@ -104,4 +104,9 @@ Create the jar file ([JavaMethodTransformer.jar](https://github.com/mdrafiqulrab
 }
 ```
 
-- - -
+---
+
+# Updated Program Transformation Tools:
+
+- JavaMethodTransformer: https://github.com/mdrafiqulrabin/JavaTransformer
+- CSharpMethodTransformer: https://github.com/mdrafiqulrabin/CSharpTransformer
