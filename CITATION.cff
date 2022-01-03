@@ -1,0 +1,11 @@
+@article{rabin2021generalizability,
+  title = {On the generalizability of Neural Program Models with respect to semantic-preserving program transformations},
+  author = {Md Rafiqul Islam Rabin and Nghi D.Q. Bui and Ke Wang and Yijun Yu and Lingxiao Jiang and Mohammad Amin Alipour},
+  journal = {Information and Software Technology},
+  volume = {135},
+  pages = {106552},
+  year = {2021},
+  issn = {0950-5849},
+  doi = {https://doi.org/10.1016/j.infsof.2021.106552},
+  url = {https://www.sciencedirect.com/science/article/pii/S0950584921000379}
+}
