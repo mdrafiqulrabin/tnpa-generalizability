@@ -1,6 +1,5 @@
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.stmt.Statement;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
@@ -12,12 +11,13 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.Callable;
 
 public class MethodExtractor implements Callable<Void> {
-    private String mInputPath;
-    private String mOutputPath;
+    private final String mInputPath;
+    private final String mOutputPath;
 
     MethodExtractor(String inpPath, String outPath) {
         if (!inpPath.endsWith("/")) {
@@ -47,28 +47,31 @@ public class MethodExtractor implements Callable<Void> {
         );
         System.out.println(input_dir + " : " + javaFiles.size());
 
+        //TODO: parallel extraction
         javaFiles.forEach((javaFile) -> {
+            Hashtable<String, Integer> method_counts = new Hashtable<>();
             try {
                 CompilationUnit root;
                 try {
                     root = StaticJavaParser.parse(javaFile);
                 } catch (Exception ex) {
                     String codeText = new String(Files.readAllBytes(javaFile.toPath()));
-                    codeText = "class C { \n" + codeText + "\n}";
+                    codeText = "class T { \n" + codeText + "\n}";
                     root = StaticJavaParser.parse(codeText);
                 }
                 if (root == null) return;
                 root.accept(new VoidVisitorAdapter<Void>() {
                     @Override
                     public void visit(MethodDeclaration md, Void arg) {
-                        md = handleParseProblemException(md);
+                        md = Common.handleParseProblemException(md);
                         List<Statement> mdStatements = md.findAll(Statement.class);
                         if (mdStatements.size() > Common.STATEMENTS_PER_METHOD) {
-                            String output_dir_part1 = mOutputPath;
-                            String output_dir_part2 = javaFile.getPath().replaceFirst(input_dir, "");
-                            output_dir_part2 = output_dir_part2.substring(0, output_dir_part2.lastIndexOf(".java"));
-                            output_dir_part2 += "_" + md.getName() + ".java";
-                            String output_dir = output_dir_part1 + output_dir_part2;
+                            String method_name = md.getName().asString();
+                            method_counts.put(method_name, method_counts.getOrDefault(method_name, 0) + 1);
+                            String dir_last_part = javaFile.getPath().replaceFirst(input_dir, "");
+                            dir_last_part = dir_last_part.substring(0, dir_last_part.lastIndexOf(".java"));
+                            dir_last_part += "_" + method_counts.get(method_name) + "_" + method_name + ".java";
+                            String output_dir = mOutputPath + dir_last_part;
                             Common.writeSourceCode(md, output_dir);
                         }
                     }
@@ -91,11 +94,5 @@ public class MethodExtractor implements Callable<Void> {
                 ex.printStackTrace();
             }
         });
-    }
-
-    private MethodDeclaration handleParseProblemException(MethodDeclaration md) {
-        //ParseProblemException: 'default' is not allowed here.
-        md = md.removeModifier(Modifier.Keyword.DEFAULT);
-        return md;
     }
 }

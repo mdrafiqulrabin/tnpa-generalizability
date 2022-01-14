@@ -1,3 +1,4 @@
+import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.body.MethodDeclaration;
 
 import java.io.*;
@@ -5,16 +6,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
+@SuppressWarnings("unused")
 public final class Common {
 
     static final int STATEMENTS_PER_METHOD = 1;
 
-    @SuppressWarnings("unused")
     static String removeLastChar(String str) {
         return str.substring(0, str.length() - 1);
     }
 
-    @SuppressWarnings("unused")
     public static ArrayList<Path> getFilePaths(String rootPath) {
         ArrayList<Path> listOfPaths = new ArrayList<>();
         final FilenameFilter filter = (dir, name) -> dir.isDirectory() && name.toLowerCase().endsWith(".java");
@@ -39,4 +39,9 @@ public final class Common {
         }
     }
 
+    static MethodDeclaration handleParseProblemException(MethodDeclaration md) {
+        //ParseProblemException: 'default' is not allowed here.
+        md = md.removeModifier(Modifier.Keyword.DEFAULT);
+        return md;
+    }
 }
