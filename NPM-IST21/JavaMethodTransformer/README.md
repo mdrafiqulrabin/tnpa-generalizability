@@ -1,5 +1,5 @@
 # JavaMethodTransformer
-Apply sematic transformations on Java methods.
+Apply semantic transformations on Java methods.
 
 ---
 

@@ -1,5 +1,8 @@
-# OS file
+# Temp files
 .DS_Store
+.Rhistory
+Icon?
+*.html
 
 # Generated files
 /target/
