@@ -1,0 +1,6 @@
+[submodule "ProgramTransformer/code/JavaTransformer"]
+	path = ProgramTransformer/code/JavaTransformer
+	url = https://github.com/mdrafiqulrabin/JavaTransformer
+[submodule "ProgramTransformer/code/CSharpTransformer"]
+	path = ProgramTransformer/code/CSharpTransformer
+	url = https://github.com/mdrafiqulrabin/CSharpTransformer
